@@ -1,18 +1,18 @@
-[tool.poetry]
-name = "libvirt-compose"
+[project]
+name = "virt-compose"
 version = "0.1.0"
-description = ""
-authors = ["rikyiso01 <riky.isola@gmail.com>"]
-readme = "README.md"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.12.3",
+    "cyclopts>=3.3.1",
+    "pydantic>=2.10.6",
+    "pyyaml>=6.0.2",
+]
 
-[tool.poetry.dependencies]
-python = "^3.11"
-pyyaml = "^6.0.1"
-pydantic = "^2.8.2"
-bs4 = "^0.0.2"
-cyclopts = "^2.9.9"
-
+[project.scripts]
+virt-compose = "virt_compose:app"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
