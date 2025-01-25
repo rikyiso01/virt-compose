@@ -1,0 +1,10 @@
+archlinux-x86_64.iso
+disk.qcow2
+sha256sums.txt
+OVMF_CODE.fd
+
+
+### Created by https://www.gitignore.io
+### direnv ###
+.direnv
+.envrc

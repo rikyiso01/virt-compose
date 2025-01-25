@@ -1,0 +1,24 @@
+{
+  "packages": [
+    "qemu_kvm@latest",
+    "gnumake@latest",
+    "libvirt@latest",
+    "virt-viewer@latest",
+    "poetry@latest",
+    "sshocker@latest",
+    "yq-go@latest",
+    "packer@latest",
+    "virt-manager@latest"
+  ],
+  "shell": {
+    "init_hook": [
+      "echo 'Welcome to devbox!' > /dev/null",
+      "export SFTP_SERVER=/usr/libexec/openssh/sftp-server"
+    ],
+    "scripts": {
+      "test": [
+        "echo \"Error: no test specified\" && exit 1"
+      ]
+    }
+  }
+}

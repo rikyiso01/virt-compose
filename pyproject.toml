@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "libvirt-compose"
+version = "0.1.0"
+description = ""
+authors = ["rikyiso01 <riky.isola@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pyyaml = "^6.0.1"
+pydantic = "^2.8.2"
+bs4 = "^0.0.2"
+cyclopts = "^2.9.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
