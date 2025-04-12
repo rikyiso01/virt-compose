@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
+from typing import Annotated
 from bs4 import BeautifulSoup
 from traceback import print_exc
 from time import sleep
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from cyclopts import App
+from cyclopts import App, Parameter
 from pydantic import TypeAdapter
 from yaml import safe_load
 from subprocess import check_call, check_output
@@ -118,8 +119,27 @@ def create_machine(name: str, machine: Machine, image_output: Path, force: bool)
         check_call(["virt-install"] + args_map_to_list(machine))
 
 
+def get_all_inactive_networks() -> list[str]:
+    output = check_output(["virsh", "net-list","--name","--inactive"], text=True)
+    return output.split()
+
+def start_all_networks():
+    for network in get_all_inactive_networks():
+        start_network(network)
+
+def network_is_active(name: str) -> bool:
+    output = check_output(["virsh", "net-list"], text=True)
+    return name in output
+
+
+def start_network(name: str):
+    if not network_is_active(name):
+        check_call(["virsh", "net-start", name])
+
+
 def start_machine(name: str):
     if not machine_is_running(name):
+        start_all_networks()
         check_call(["virsh", "start", name])
 
 
@@ -178,13 +198,19 @@ def destroy_machine(name: str):
 
 
 @app.meta.default
-def main(file: Path = Path("./virt-compose.yml")):
+def main(
+    *tokens: Annotated[str, Parameter(show=False, allow_leading_hyphen=True)],
+    file: Path = Path("./virt-compose.yml"),
+):
     global compose_file
     compose_file = TypeAdapter(ComposeFile).validate_python(safe_load(file.read_text()))
+    command, bound, ignored = app.parse_args(tokens)
+    print("MAIN")
+    command(*bound.args, **bound.kwargs)
 
 
 @app.command()
-def build(*images_list: str, force: bool = False, only: str|None = None):
+def build(*images_list: str, force: bool = False, only: str | None = None):
     images = [*images_list]
     if not images:
         images = [*compose_file.images]
@@ -226,8 +252,8 @@ def up(*machines_list: str, build: bool = False, force_recreate: bool = False):
 
 
 @app.command()
-def start(*machines_list:str):
-    machines=[*machines_list]
+def start(*machines_list: str):
+    machines = [*machines_list]
     if not machines:
         machines = [*compose_file.machines]
     for name in machines:
@@ -235,8 +261,8 @@ def start(*machines_list:str):
 
 
 @app.command()
-def stop(*machines_list:str, timeout: int = 10):
-    machines=[*machines_list]
+def stop(*machines_list: str, timeout: int = 10):
+    machines = [*machines_list]
     if not machines:
         machines = [*compose_file.machines]
     for name in machines:
@@ -244,15 +270,15 @@ def stop(*machines_list:str, timeout: int = 10):
 
 
 @app.command()
-def down(*machines_list:str, timeout: int = 10):
-    machines=[*machines_list]
+def down(*machines_list: str, timeout: int = 10):
+    machines = [*machines_list]
     stop(*machines, timeout=timeout)
     rm(*machines)
 
 
 @app.command()
 def rm(*machines_list: str):
-    machines=[*machines_list]
+    machines = [*machines_list]
     if not machines:
         machines = [*compose_file.machines]
     for name in machines:
@@ -261,7 +287,7 @@ def rm(*machines_list: str):
 
 @app.command()
 def ps(*machines_list: str, all: bool = False):
-    machines=[*machines_list]
+    machines = [*machines_list]
     if not machines:
         machines = [*compose_file.machines]
     for name in machines:
@@ -282,5 +308,9 @@ def exec(machine: str, user: str, *command: str):
     )
 
 
+def entry():
+    app.meta()
+
+
 if __name__ == "__main__":
-    app()
+    entry()

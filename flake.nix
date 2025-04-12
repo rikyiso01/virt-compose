@@ -58,7 +58,12 @@
         };
 
         # This example is only using x86_64-linux
-        pkgs = nixpkgs.legacyPackages.${system};
+        pkgs = import nixpkgs {
+          system = system;
+          config = {
+            allowUnfree = true;
+          };
+        };
         lib = pkgs.lib;
 
         # Use Python 3.12 from nixpkgs
@@ -77,6 +82,17 @@
                 pyprojectOverrides
               ]
             );
+        binary = pythonSet.mkVirtualEnv "virt-compose-env" workspace.deps.default;
+        program = pkgs.writeShellApplication {
+          name = "virt-compose";
+          runtimeInputs = [
+            pkgs.packer
+            pkgs.libvirt
+            pkgs.virt-manager
+            pkgs.openssh
+          ];
+          text = "exec ${binary}/bin/virt-compose \"$@\"";
+        };
 
       in
       {
@@ -91,13 +107,13 @@
         # Package a virtual environment as our main application.
         #
         # Enable no optional dependencies for production build.
-        packages.default = pythonSet.mkVirtualEnv "virt-compose-env" workspace.deps.default;
+        packages.default = program;
 
         # Make hello runnable with `nix run`
         apps = {
           default = {
             type = "app";
-            program = "${self.packages.${system}.default}/bin/virt-compose";
+            program = "${program}/bin/virt-compose";
           };
         };
       }

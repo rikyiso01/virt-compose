@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
-virt-compose = "virt_compose:app"
+virt-compose = "virt_compose:entry"
 
 [build-system]
 requires = ["hatchling"]
