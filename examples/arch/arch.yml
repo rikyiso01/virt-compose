@@ -1,0 +1,49 @@
+packer:
+  required_plugins:
+    qemu:
+      version: ">=1.1.0"
+      source: "github.com/hashicorp/qemu"
+
+source:
+  qemu:
+    arch:
+      disk_size: "60G"
+      memory: 4096
+      format: "qcow2"
+      accelerator: "kvm"
+      ssh_timeout: "2m"
+      vm_name: "arch"
+      net_device: "virtio-net"
+      disk_interface: "virtio"
+      efi_boot: true
+      efi_firmware_code: "/usr/share/OVMF/x64/OVMF_CODE.4m.fd"
+      efi_firmware_vars: "/usr/share/OVMF/x64/OVMF_VARS.4m.fd"
+      communicator: "ssh"
+      boot_key_interval: "10ms"
+      boot_keygroup_interval: "10ms"
+
+build:
+  - name: step1
+    source:
+      "source.qemu.arch":
+        iso_url: "https://geo.mirror.pkgbuild.com/iso/2025.04.01/archlinux-2025.04.01-x86_64.iso"
+        iso_checksum: "sha256:1155af9c142387c45eb6fbdbf32f5652fb514ce15a4d17a83e6056a996895026"
+        output_directory: "build"
+        ssh_username: "root"
+        boot_wait: "1s"
+        shutdown_command: "poweroff"
+        boot_command:
+          - "<return><wait30>echo '{{ .SSHPublicKey }}' > .ssh/authorized_keys<return>"
+    provisioner:
+      - file:
+          source: "./arch-install.sh"
+          destination: "/root/install.sh"
+      - shell:
+          inline:
+            - bash /root/install.sh /dev/vda ''
+            - arch-chroot /mnt pacman -S --noconfirm --needed openssh sshfs
+            - arch-chroot /mnt systemctl enable sshd
+            - mkdir -p /mnt/home/riky/.ssh
+            - cp .ssh/authorized_keys /mnt/home/riky/.ssh/authorized_keys
+            - arch-chroot /mnt chown -R riky:riky /home/riky/.ssh
+

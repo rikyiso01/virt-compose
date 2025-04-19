@@ -1,0 +1,14 @@
+machines:
+  nixos:
+    image: nixos
+    memory: 4096
+    os-variant: nixos-unstable
+    boot:
+      firmware: efi
+      loader_secure: false
+
+images:
+  nixos:
+    packerfile: ./nixos.yml
+    output: ./build/nixos
+

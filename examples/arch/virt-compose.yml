@@ -1,0 +1,20 @@
+machines:
+  arch:
+    image: arch
+    memory: 4096
+    os-variant: archlinux
+    boot:
+      firmware: efi
+      loader_secure: false
+    video:
+      accel3d: yes
+    graphics:
+      spice:
+      listen: none
+      gl: yes
+
+images:
+  arch:
+    packerfile: ./arch.yml
+    output: ./build/arch
+

@@ -1,0 +1,43 @@
+packer:
+  required_plugins:
+    qemu:
+      version: ">=1.1.0"
+      source: "github.com/hashicorp/qemu"
+
+source:
+  qemu:
+    nixos:
+      disk_size: "60G"
+      memory: 8192
+      format: "qcow2"
+      accelerator: "kvm"
+      ssh_timeout: "2m"
+      vm_name: "nixos"
+      net_device: "virtio-net"
+      disk_interface: "virtio"
+      efi_boot: false
+      communicator: "ssh"
+      boot_key_interval: "10ms"
+      boot_keygroup_interval: "10ms"
+
+build:
+  - name: step1
+    source:
+      "source.qemu.nixos":
+        iso_url: "https://releases.nixos.org/nixos/24.11/nixos-24.11.715908.7105ae395770/nixos-minimal-24.11.715908.7105ae395770-x86_64-linux.iso"
+        iso_checksum: "sha256:659a056261404810703188b986b818a723fd0bcf650e58c1ea9857086612822a"
+        output_directory: "build"
+        ssh_username: "nixos"
+        boot_wait: "1s"
+        shutdown_command: "sudo poweroff"
+        boot_command:
+          - "<return><wait30>mkdir .ssh<return>echo '{{ .SSHPublicKey }}' > .ssh/authorized_keys<return>"
+    provisioner:
+      - file:
+          source: nix
+          destination: /tmp/nix
+      - shell:
+          inline:
+            - ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N ""
+            - cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+            - cd /tmp/nix && nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nixos-anywhere -- --flake .#nix --generate-hardware-config nixos-generate-config ./hardware-configuration.nix --target-host 127.0.0.1 --phases kexec,disko,install
